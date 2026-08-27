@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Construction Manifest — Build Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0b121c;
+    --bg-panel:#111b28;
+    --bg-card:#16212f;
+    --bg-card-hover:#1b2839;
+    --grid-line: rgba(140,190,210,0.07);
+    --hair: rgba(140,190,210,0.14);
+    --ink:#e9f1f6;
+    --muted:#7d93a6;
+    --muted-dim:#556575;
+    --cyan:#63c9dd;
+    --cyan-dim: rgba(99,201,221,0.14);
+    --copper:#d98a4f;
+    --copper-dim: rgba(217,138,79,0.16);
+    --red:#d0685f;
+    --green:#6fbf8b;
+    --radius: 14px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background:
+      radial-gradient(ellipse 80% 60% at 15% -10%, rgba(99,201,221,0.08), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 100% 0%, rgba(217,138,79,0.06), transparent 55%),
+      repeating-linear-gradient(0deg, var(--grid-line) 0px, var(--grid-line) 1px, transparent 1px, transparent 32px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0px, var(--grid-line) 1px, transparent 1px, transparent 32px),
+      var(--bg-deep);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{ color:inherit; }
+
+  ::selection{ background:var(--cyan-dim); color:var(--ink); }
+
+  :focus-visible{
+    outline:2px solid var(--cyan);
+    outline-offset:2px;
+    border-radius:4px;
+  }
+
+  .page{
+    max-width:1200px;
+    margin:0 auto;
+    padding:36px 24px 80px;
+  }
+
+  /* ---------- Topbar ---------- */
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    flex-wrap:wrap;
+    border-bottom:1px solid var(--hair);
+    padding-bottom:26px;
+    margin-bottom:34px;
+  }
+
+  .brand{ display:flex; gap:14px; align-items:flex-start; }
+
+  .brand-mark{
+    width:44px; height:44px;
+    flex:none;
+    border:1.5px solid var(--cyan);
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.5px;
+    color:var(--cyan);
+    background:var(--cyan-dim);
+    transform:rotate(-4deg);
+  }
+
+  .brand h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.3px;
+    margin:0 0 4px;
+  }
+
+  .brand .tagline{
+    margin:0;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+
+  .ledger-stats{
+    display:flex;
+    gap:0;
+    font-family:var(--font-mono);
+  }
+
+  .ledger-stat{
+    padding:0 22px;
+    border-left:1px solid var(--hair);
+    text-align:right;
+  }
+  .ledger-stat:first-child{ border-left:none; padding-left:0; }
+
+  .ledger-stat .num{
+    display:block;
+    font-size:22px;
+    font-weight:600;
+    color:var(--ink);
+    line-height:1.1;
+  }
+  .ledger-stat .lbl{
+    display:block;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:1.1px;
+    color:var(--muted-dim);
+    margin-top:5px;
+  }
+
+  /* ---------- Yard / card grid ---------- */
+
+  .section-label{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:1.4px;
+    color:var(--muted-dim);
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--hair);
+  }
+
+  .yard{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+    gap:18px;
+  }
+
+  .card{
+    position:relative;
+    background:var(--bg-card);
+    border:1px solid var(--hair);
+    border-radius:var(--radius);
+    padding:22px 22px 20px;
+    cursor:pointer;
+    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    text-align:left;
+    width:100%;
+    color:inherit;
+    font-family:inherit;
+  }
+
+  .card:hover, .card:focus-visible{
+    background:var(--bg-card-hover);
+    border-color:var(--cyan-dim);
+    transform:translateY(-2px);
+  }
+
+  .card::before{
+    content:"";
+    position:absolute;
+    left:0; top:14px; bottom:14px;
+    width:3px;
+    border-radius:0 3px 3px 0;
+    background:var(--copper);
+    opacity:0.85;
+  }
+  .card.is-empty::before{ background:var(--muted-dim); opacity:0.5; }
+
+  .stamp{
+    position:absolute;
+    top:16px; right:16px;
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    border:1px dashed currentColor;
+    border-radius:999px;
+    padding:4px 10px;
+    transform:rotate(-6deg);
+    white-space:nowrap;
+  }
+  .stamp.filed{ color:var(--cyan); }
+  .stamp.empty{ color:var(--muted-dim); }
+
+  .card-title{
+    font-family:var(--font-display);
+    font-size:18px;
+    font-weight:600;
+    margin:2px 26px 0 0;
+    line-height:1.3;
+  }
+  .card-sub{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+    margin-top:-10px;
+  }
+
+  .bars{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .bar-row{
+    display:grid;
+    grid-template-columns:88px 1fr 46px;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+  }
+  .bar-row .bname{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .bar-track{
+    height:6px;
+    background:rgba(255,255,255,0.05);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    border-radius:4px;
+    background:linear-gradient(90deg, var(--copper), var(--cyan));
+  }
+  .bar-row .bval{ text-align:right; color:var(--muted-dim); }
+
+  .card-empty-msg{
+    color:var(--muted-dim);
+    font-size:13px;
+    line-height:1.55;
+    font-style:normal;
+  }
+  .card-empty-msg b{ color:var(--muted); }
+
+  .card-foot{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:auto;
+    padding-top:14px;
+    border-top:1px solid var(--hair);
+  }
+  .foot-stat{ font-family:var(--font-mono); font-size:11.5px; color:var(--muted); }
+  .foot-stat b{ color:var(--ink); font-weight:600; }
+  .foot-cta{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--cyan);
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .card.is-empty .foot-cta{ color:var(--muted-dim); }
+  .foot-cta svg{ width:12px; height:12px; }
+
+  .progress-mini{
+    height:4px; width:100%;
+    background:rgba(255,255,255,0.06);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progress-mini > span{
+    display:block; height:100%;
+    background:var(--green);
+  }
+
+  /* ---------- Modal ---------- */
+
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(5,9,14,0.72);
+    backdrop-filter: blur(3px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:26px;
+    z-index:50;
+  }
+  .modal-overlay.open{ display:flex; }
+
+  .modal{
+    width:min(980px, 100%);
+    height:min(720px, 92vh);
+    background:var(--bg-panel);
+    border:1px solid var(--hair);
+    border-radius:18px;
+    display:flex;
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+  }
+
+  .modal-tabs{
+    width:190px;
+    flex:none;
+    background:var(--bg-deep);
+    border-right:1px solid var(--hair);
+    padding:18px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    overflow-y:auto;
+  }
+  .modal-tab{
+    font-family:var(--font-mono);
+    font-size:12px;
+    text-align:left;
+    background:none;
+    border:none;
+    color:var(--muted);
+    padding:10px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+  }
+  .modal-tab:hover{ color:var(--ink); background:rgba(255,255,255,0.04); }
+  .modal-tab.active{ color:var(--cyan); background:var(--cyan-dim); }
+  .modal-tab .count{ font-size:10px; color:var(--muted-dim); }
+  .modal-tab.active .count{ color:var(--cyan); }
+
+  .modal-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+
+  .modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding:22px 26px 16px;
+    border-bottom:1px solid var(--hair);
+    flex:none;
+  }
+  .modal-eyebrow{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+    color:var(--muted-dim);
+    margin:0 0 6px;
+  }
+  .modal-header h2{
+    font-family:var(--font-display);
+    font-size:21px;
+    margin:0;
+  }
+  .close-btn{
+    background:none; border:1px solid var(--hair);
+    color:var(--muted);
+    width:32px; height:32px;
+    border-radius:8px;
+    cursor:pointer;
+    flex:none;
+    font-size:14px;
+    line-height:1;
+  }
+  .close-btn:hover{ color:var(--ink); border-color:var(--cyan-dim); }
+
+  .modal-content{
+    flex:1;
+    overflow-y:auto;
+    padding:20px 26px 30px;
+  }
+
+  /* Overview tab */
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:12px;
+    margin-bottom:22px;
+  }
+  .stat-box{
+    background:var(--bg-card);
+    border:1px solid var(--hair);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .stat-box .num{
+    font-family:var(--font-mono);
+    font-size:20px;
+    font-weight:600;
+  }
+  .stat-box .lbl{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .overview-progress{
+    margin-bottom:26px;
+  }
+  .overview-progress .row{
+    display:flex; justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .track{
+    height:8px; border-radius:5px;
+    background:rgba(255,255,255,0.06);
+    overflow:hidden;
+  }
+  .track > span{ display:block; height:100%; background:var(--green); }
+
+  .note-block{
+    background:var(--bg-card);
+    border:1px dashed var(--hair);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  .note-block b{ color:var(--ink); }
+  .note-block code{
+    font-family:var(--font-mono);
+    background:rgba(255,255,255,0.06);
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:11.5px;
+    color:var(--cyan);
+  }
+
+  /* Table tab */
+  .table-toolbar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+  .search-input{
+    flex:1;
+    min-width:160px;
+    background:var(--bg-card);
+    border:1px solid var(--hair);
+    color:var(--ink);
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    padding:9px 12px;
+    border-radius:8px;
+  }
+  .search-input::placeholder{ color:var(--muted-dim); }
+
+  .export-btn{
+    background:none;
+    border:1px solid var(--hair);
+    color:var(--muted);
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    padding:9px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .export-btn:hover{ color:var(--cyan); border-color:var(--cyan-dim); }
+
+  .table-wrap{
+    border:1px solid var(--hair);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+  }
+  thead th{
+    text-align:left;
+    background:var(--bg-card);
+    color:var(--muted);
+    font-weight:500;
+    padding:10px 14px;
+    border-bottom:1px solid var(--hair);
+    cursor:pointer;
+    user-select:none;
+    white-space:nowrap;
+  }
+  thead th.num, td.cell-num{ text-align:right; }
+  thead th:hover{ color:var(--ink); }
+  thead th .arrow{ opacity:0.5; margin-left:4px; font-size:10px; }
+  tbody td{
+    padding:8px 14px;
+    border-bottom:1px solid rgba(255,255,255,0.035);
+    color:var(--ink);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:rgba(255,255,255,0.025); }
+  td.cell-item{ color:var(--ink); }
+  td.miss{ color:var(--copper); }
+  td.avail{ color:var(--green); }
+  .empty-row td{
+    text-align:center;
+    color:var(--muted-dim);
+    padding:26px;
+  }
+
+  .sub-heading{
+    font-family:var(--font-display);
+    font-size:14px;
+    font-weight:600;
+    margin:22px 0 10px;
+    color:var(--ink);
+  }
+  .sub-heading:first-child{ margin-top:0; }
+
+  .foot-total-row{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--muted);
+    padding:10px 14px;
+    background:var(--bg-card);
+    border:1px solid var(--hair);
+    border-top:none;
+    border-radius:0 0 10px 10px;
+    margin-top:-10px;
+  }
+  .foot-total-row b{ color:var(--ink); }
+
+  @media (max-width:720px){
+    .page{ padding:22px 14px 60px; }
+    .topbar{ align-items:flex-start; }
+    .ledger-stats{ width:100%; justify-content:space-between; }
+    .ledger-stat{ padding:0 10px; text-align:left; }
+    .modal-overlay{ padding:0; }
+    .modal{ width:100%; height:100%; border-radius:0; flex-direction:column; }
+    .modal-tabs{ width:100%; flex-direction:row; overflow-x:auto; border-right:none; border-bottom:1px solid var(--hair); }
+    .modal-tab{ flex:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">▣</div>
+      <div>
+        <h1>Construction Manifest</h1>
+        <p class="tagline">Material ledger for every build in the yard</p>
+      </div>
+    </div>
+    <div class="ledger-stats" id="ledgerStats"></div>
+  </header>
+
+  <p class="section-label">Filed manifests</p>
+  <div class="yard" id="yardFiled"></div>
+
+  <p class="section-label" style="margin-top:34px;">Reserved slots</p>
+  <div class="yard" id="yardEmpty"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <nav class="modal-tabs" id="modalTabs"></nav>
+    <div class="modal-body">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow" id="modalEyebrow"></p>
+          <h2 id="modalTitle"></h2>
+        </div>
+        <button class="close-btn" id="closeModal" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   DATA
+   -------------------------------------------------------------------------
+   Add a new build by pushing an object into PROJECTS (filled manifest) or
+   into EMPTY_SLOTS (reserved, no data yet). Each project can hold one or
+   more "structures" (separate schematics that belong to the same build).
+   materials rows use: { item, total, missing, available }.
+   ========================================================================= */
+
+const PROJECTS = [
+  {
+    id: "fenrys-airship-angel",
+    name: "Fenrys Airship + Angel Backdrop",
+    subtitle: "2 linked schematics · filed together",
+    structures: [
+      {
+        id: "airship",
+        name: "Base Airship Style — Fenrys",
+        totalBlocks: 43171,
+        materials: [
+          {item:"Block of Iron", total:10500, missing:10500, available:0},
+          {item:"Ochre Frog Light", total:6146, missing:6146, available:0},
+          {item:"Block of Gold", total:5196, missing:5196, available:0},
+          {item:"White Stained Glass", total:3712, missing:3712, available:0},
+          {item:"Blue Wool", total:1912, missing:1912, available:0},
+          {item:"White Wool", total:1802, missing:1802, available:0},
+          {item:"Oak Planks", total:1039, missing:1039, available:0},
+          {item:"Light Gray Wool", total:1001, missing:1001, available:0},
+          {item:"Glass", total:950, missing:950, available:0},
+          {item:"Oak Wood", total:949, missing:949, available:0},
+          {item:"Birch Planks", total:710, missing:710, available:0},
+          {item:"Red Wool", total:673, missing:673, available:0},
+          {item:"Birch Wood", total:653, missing:653, available:0},
+          {item:"Polished Diorite Slab", total:614, missing:614, available:0},
+          {item:"Jungle Planks", total:586, missing:586, available:0},
+          {item:"Oak Fence", total:572, missing:572, available:0},
+          {item:"Brown Wool", total:547, missing:547, available:0},
+          {item:"Light Blue Wool", total:467, missing:467, available:0},
+          {item:"Oak Stairs", total:453, missing:453, available:0},
+          {item:"Stone Slab", total:437, missing:437, available:0},
+          {item:"Stone Brick Slab", total:379, missing:379, available:0},
+          {item:"Stone Bricks", total:332, missing:332, available:0},
+          {item:"Glass Pane", total:298, missing:298, available:0},
+          {item:"Stone", total:263, missing:263, available:0},
+          {item:"Iron Bars", total:224, missing:224, available:0},
+          {item:"Chest", total:222, missing:222, available:0},
+          {item:"Oak Slab", total:212, missing:212, available:0},
+          {item:"Spruce Planks", total:174, missing:174, available:0},
+          {item:"Spruce Slab", total:154, missing:154, available:0},
+          {item:"Oak Sign", total:131, missing:131, available:0},
+          {item:"Bricks", total:121, missing:121, available:0},
+          {item:"Oak Trapdoor", total:118, missing:118, available:0},
+          {item:"Black Wool", total:103, missing:103, available:0},
+          {item:"Cobblestone", total:98, missing:98, available:0},
+          {item:"Ladder", total:96, missing:96, available:0},
+          {item:"Torch", total:94, missing:94, available:0},
+          {item:"Purple Wool", total:89, missing:89, available:0},
+          {item:"Spruce Stairs", total:87, missing:87, available:0},
+          {item:"Stone Pressure Plate", total:80, missing:80, available:0},
+          {item:"Oak Door", total:75, missing:75, available:0},
+          {item:"White Bed", total:74, missing:74, available:0},
+          {item:"Stone Brick Stairs", total:71, missing:71, available:0},
+          {item:"Bookshelf", total:67, missing:67, available:0},
+          {item:"Redstone Lamp", total:61, missing:61, available:0},
+          {item:"Pink Wool", total:59, missing:59, available:0},
+          {item:"Birch Stairs", total:50, missing:50, available:0},
+          {item:"Redstone Dust", total:46, missing:46, available:0},
+          {item:"Diamond Ore", total:45, missing:45, available:0},
+          {item:"Spruce Wood", total:44, missing:44, available:0},
+          {item:"Lever", total:40, missing:40, available:0},
+          {item:"Birch Slab", total:32, missing:32, available:0},
+          {item:"Sandstone Slab", total:26, missing:26, available:0},
+          {item:"Waxed Oxidized Copper Grate", total:25, missing:25, available:0},
+          {item:"Brewing Stand", total:24, missing:24, available:0},
+          {item:"Cobblestone Slab", total:24, missing:24, available:0},
+          {item:"Sandstone", total:24, missing:24, available:0},
+          {item:"Cobblestone Stairs", total:20, missing:20, available:0},
+          {item:"Water Bucket", total:20, missing:20, available:0},
+          {item:"Yellow Wool", total:15, missing:15, available:0},
+          {item:"Block of Lapis Lazuli", total:14, missing:14, available:0},
+          {item:"Barrel", total:13, missing:13, available:0},
+          {item:"Gray Wool", total:13, missing:13, available:0},
+          {item:"Redstone Torch", total:12, missing:12, available:0},
+          {item:"Redstone Repeater", total:11, missing:11, available:0},
+          {item:"Furnace", total:10, missing:10, available:0},
+          {item:"Glowstone", total:9, missing:9, available:0},
+          {item:"Oak Leaves", total:8, missing:8, available:0},
+          {item:"Stone Brick Wall", total:8, missing:8, available:0},
+          {item:"Jungle Stairs", total:6, missing:6, available:0},
+          {item:"Polished Diorite Stairs", total:6, missing:6, available:0},
+          {item:"Oak Log", total:5, missing:5, available:0},
+          {item:"Oak Pressure Plate", total:3, missing:3, available:0},
+          {item:"Sticky Piston", total:3, missing:3, available:0},
+          {item:"Yellow Stained Glass", total:3, missing:3, available:0},
+          {item:"Blast Furnace", total:2, missing:2, available:0},
+          {item:"Crafting Table", total:2, missing:2, available:0},
+          {item:"Smoker", total:2, missing:2, available:0},
+          {item:"Cake", total:1, missing:1, available:0},
+          {item:"Jukebox", total:1, missing:1, available:0},
+          {item:"Jungle Sign", total:1, missing:1, available:0},
+          {item:"Magenta Wool", total:1, missing:1, available:0},
+          {item:"Smooth Sandstone", total:1, missing:1, available:0},
+        ],
+        shulkers: [
+          {item:"Block of Iron", label:"6 SB + 132", extra:132},
+          {item:"Ochre Froglight", label:"3 SB + 962", extra:962},
+          {item:"Block of Gold", label:"3 SB + 12", extra:12},
+          {item:"White Stained Glass", label:"2 SB + 256", extra:256},
+          {item:"Blue Wool", label:"1 SB + 184", extra:184},
+          {item:"White Wool", label:"1 SB + 74", extra:74},
+          {item:"Everything else", label:"1 SB", extra:0},
+        ],
+        shulkerBoxCount: 25,
+      },
+      {
+        id: "angel",
+        name: "Angel Background",
+        totalBlocks: 164771,
+        materials: [
+          {item:"End Rod", total:160668, missing:160668, available:0},
+          {item:"Black Stained Glass", total:1260, missing:1260, available:0},
+          {item:"White Stained Glass", total:1080, missing:1080, available:0},
+          {item:"Black Stained Glass Pane", total:515, missing:515, available:0},
+          {item:"Warped Trapdoor", total:480, missing:480, available:0},
+          {item:"White Stained Glass Pane", total:462, missing:462, available:0},
+          {item:"Bedrock", total:281, missing:281, available:0},
+          {item:"Obsidian", total:25, missing:25, available:0},
+        ],
+        shulkers: [
+          {item:"End Rods", label:"92 SB + 1692", extra:1692},
+          {item:"Black Stained Glass", label:"1 SB", extra:0},
+          {item:"White Stained Glass", label:"1 SB", extra:0},
+          {item:"Warped Trapdoor", label:"1 SB", extra:0},
+          {item:"White Stained Glass Pane", label:"1 SB", extra:0},
+          {item:"Bedrock", label:"1 SB", extra:0},
+          {item:"Obsidian", label:"1 SB", extra:0},
+        ],
+        shulkerBoxCount: 96,
+      },
+    ],
+    combinedTotal: 207942,
+    combinedShulkerBoxes: 121,
+  },
+];
+
+const EMPTY_SLOTS = [
+  { hint: "Next schematic export" },
+  { hint: "Next schematic export" },
+];
+
+/* ========================================================================= */
+
+const fmt = n => n.toLocaleString("en-US");
+
+function sumMaterials(materials, key){
+  return materials.reduce((s,r)=>s+r[key],0);
+}
+
+function projectTotals(project){
+  const allMats = project.structures.flatMap(s=>s.materials);
+  const total = sumMaterials(allMats,"total");
+  const available = sumMaterials(allMats,"available");
+  const itemTypes = allMats.length;
+  const pct = total ? Math.round((available/total)*1000)/10 : 0;
+  return { total, available, itemTypes, pct };
+}
+
+function topMaterials(project, n){
+  const merged = {};
+  project.structures.flatMap(s=>s.materials).forEach(r=>{
+    merged[r.item] = (merged[r.item]||0) + r.total;
+  });
+  return Object.entries(merged)
+    .map(([item,total])=>({item,total}))
+    .sort((a,b)=>b.total-a.total)
+    .slice(0,n);
+}
+
+/* ---------- Ledger header stats ---------- */
+
+function renderLedgerStats(){
+  const el = document.getElementById("ledgerStats");
+  const filed = PROJECTS.length;
+  const reserved = EMPTY_SLOTS.length;
+  let grandTotal = 0, grandAvail = 0, grandTypes = 0;
+  PROJECTS.forEach(p=>{
+    const t = projectTotals(p);
+    grandTotal += t.total; grandAvail += t.available; grandTypes += t.itemTypes;
+  });
+  const pct = grandTotal ? Math.round((grandAvail/grandTotal)*1000)/10 : 0;
+
+  el.innerHTML = `
+    <div class="ledger-stat"><span class="num">${filed}</span><span class="lbl">Filed</span></div>
+    <div class="ledger-stat"><span class="num">${reserved}</span><span class="lbl">Reserved</span></div>
+    <div class="ledger-stat"><span class="num">${fmt(grandTypes)}</span><span class="lbl">Block types</span></div>
+    <div class="ledger-stat"><span class="num">${fmt(grandTotal)}</span><span class="lbl">Blocks needed</span></div>
+    <div class="ledger-stat"><span class="num">${pct}%</span><span class="lbl">Gathered</span></div>
+  `;
+}
+
+/* ---------- Cards ---------- */
+
+function renderCards(){
+  const filedEl = document.getElementById("yardFiled");
+  const emptyEl = document.getElementById("yardEmpty");
+
+  filedEl.innerHTML = "";
+  PROJECTS.forEach(project=>{
+    const t = projectTotals(project);
+    const top3 = topMaterials(project, 3);
+    const max = top3.length ? top3[0].total : 1;
+
+    const card = document.createElement("button");
+    card.className = "card";
+    card.innerHTML = `
+      <span class="stamp filed">${t.pct}% gathered</span>
+      <div>
+        <h3 class="card-title">${project.name}</h3>
+        <p class="card-sub">${project.structures.length} structure${project.structures.length>1?"s":""} · ${fmt(t.itemTypes)} block types</p>
+      </div>
+      <div class="bars">
+        ${top3.map(m=>`
+          <div class="bar-row">
+            <span class="bname" title="${m.item}">${m.item}</span>
+            <span class="bar-track"><span class="bar-fill" style="width:${Math.round((m.total/max)*100)}%"></span></span>
+            <span class="bval">${fmt(m.total)}</span>
+          </div>
+        `).join("")}
+      </div>
+      <div class="card-foot">
+        <span class="foot-stat">Needs <b>${fmt(t.total)}</b> blocks</span>
+        <span class="foot-cta">Open manifest
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
+      </div>
+    `;
+    card.addEventListener("click", ()=>openModal(project));
+    filedEl.appendChild(card);
+  });
+
+  emptyEl.innerHTML = "";
+  EMPTY_SLOTS.forEach((slot, i)=>{
+    const card = document.createElement("div");
+    card.className = "card is-empty";
+    card.innerHTML = `
+      <span class="stamp empty">0 items</span>
+      <div>
+        <h3 class="card-title">Untitled manifest</h3>
+        <p class="card-sub">Slot ${i+1} · no schematic filed</p>
+      </div>
+      <p class="card-empty-msg">${slot.hint || "Waiting on a material list."} Export a list from your world editor and add it to <b>PROJECTS</b> in the page source to fill this slot.</p>
+      <div class="card-foot">
+        <span class="foot-stat">Needs <b>0</b> blocks</span>
+        <span class="foot-cta">Reserved</span>
+      </div>
+    `;
+    emptyEl.appendChild(card);
+  });
+}
+
+/* ---------- Modal ---------- */
+
+const overlay = document.getElementById("modalOverlay");
+const modalTabsEl = document.getElementById("modalTabs");
+const modalContentEl = document.getElementById("modalContent");
+const modalTitleEl = document.getElementById("modalTitle");
+const modalEyebrowEl = document.getElementById("modalEyebrow");
+
+let currentProject = null;
+let currentTab = "overview";
+const sortState = {}; // keyed by structure id -> {key, dir}
+const searchState = {}; // keyed by structure id -> query
+
+function openModal(project){
+  currentProject = project;
+  currentTab = "overview";
+  modalEyebrowEl.textContent = "Manifest";
+  modalTitleEl.textContent = project.name;
+  renderTabs();
+  renderTabContent();
+  overlay.classList.add("open");
+}
+
+function closeModal(){
+  overlay.classList.remove("open");
+}
+
+document.getElementById("closeModal").addEventListener("click", closeModal);
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+
+function renderTabs(){
+  const tabs = [
+    { id:"overview", label:"Overview" },
+    ...currentProject.structures.map(s=>({ id:s.id, label:s.name, count: s.materials.length })),
+    { id:"shulkers", label:"Shulker manifest" },
+  ];
+  modalTabsEl.innerHTML = tabs.map(t=>`
+    <button class="modal-tab ${t.id===currentTab?"active":""}" data-tab="${t.id}">
+      <span>${t.label}</span>
+      ${t.count!==undefined ? `<span class="count">${t.count}</span>` : ""}
+    </button>
+  `).join("");
+  modalTabsEl.querySelectorAll(".modal-tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      currentTab = btn.dataset.tab;
+      renderTabs();
+      renderTabContent();
+    });
+  });
+}
+
+function renderTabContent(){
+  if(currentTab === "overview"){
+    renderOverview();
+  } else if(currentTab === "shulkers"){
+    renderShulkers();
+  } else {
+    const structure = currentProject.structures.find(s=>s.id===currentTab);
+    renderStructureTable(structure);
+  }
+}
+
+function renderOverview(){
+  const t = projectTotals(currentProject);
+  modalContentEl.innerHTML = `
+    <div class="stat-grid">
+      ${currentProject.structures.map(s=>`
+        <div class="stat-box">
+          <div class="num">${fmt(s.totalBlocks)}</div>
+          <div class="lbl">${s.name} — blocks needed</div>
+        </div>
+      `).join("")}
+      <div class="stat-box">
+        <div class="num">${fmt(currentProject.combinedTotal)}</div>
+        <div class="lbl">Combined blocks needed</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">${fmt(currentProject.combinedShulkerBoxes)}</div>
+        <div class="lbl">Full shulker boxes total</div>
+      </div>
+    </div>
+    <div class="overview-progress">
+      <div class="row"><span>Gathered so far</span><span>${fmt(t.available)} / ${fmt(t.total)} (${t.pct}%)</span></div>
+      <div class="track"><span style="width:${t.pct}%"></span></div>
+    </div>
+    <div class="note-block">
+      This manifest bundles <b>${currentProject.structures.length}</b> linked structures filed from the same schematic set.
+      Open a structure tab for its full sortable, searchable block list, or check <b>Shulker manifest</b> for the packed
+      shipping breakdown. To log real progress, update the <code>available</code> field for each item in <code>PROJECTS</code>.
+    </div>
+  `;
+}
+
+function renderShulkers(){
+  modalContentEl.innerHTML = currentProject.structures.map(s=>`
+    <h3 class="sub-heading">${s.name} <span style="color:var(--muted-dim); font-weight:400;">— ${fmt(s.shulkerBoxCount)} full shulker boxes</span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th class="num">Shulkers + extra</th><th class="num">Loose extra</th></tr></thead>
+        <tbody>
+          ${s.shulkers.map(r=>`
+            <tr><td class="cell-item">${r.item}</td><td class="cell-num">${r.label}</td><td class="cell-num">${fmt(r.extra)}</td></tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `).join("") + `
+    <div class="foot-total-row" style="margin-top:22px; border-radius:10px;">
+      <span>Combined across both structures</span>
+      <span><b>${fmt(currentProject.combinedTotal)}</b> blocks · <b>${fmt(currentProject.combinedShulkerBoxes)}</b> full shulker boxes</span>
+    </div>
+  `;
+}
+
+function renderStructureTable(structure){
+  if(!sortState[structure.id]) sortState[structure.id] = { key:null, dir:"desc" };
+  if(searchState[structure.id]===undefined) searchState[structure.id] = "";
+
+  modalContentEl.innerHTML = `
+    <div class="table-toolbar">
+      <input type="text" class="search-input" id="searchBox" placeholder="Filter by item name…" value="${searchState[structure.id]}">
+      <button class="export-btn" id="exportBtn">Export CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="item">Item <span class="arrow"></span></th>
+            <th class="num" data-key="total">Total <span class="arrow"></span></th>
+            <th class="num" data-key="missing">Missing <span class="arrow"></span></th>
+            <th class="num" data-key="available">Available <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="foot-total-row">
+      <span>${structure.name} — ${fmt(structure.totalBlocks)} blocks total</span>
+      <span id="visibleCount"></span>
+    </div>
+  `;
+
+  paintHeaderArrows(structure);
+  paintTableBody(structure);
+
+  document.getElementById("searchBox").addEventListener("input", e=>{
+    searchState[structure.id] = e.target.value;
+    paintTableBody(structure);
+  });
+
+  modalContentEl.querySelectorAll("thead th").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key = th.dataset.key;
+      const s = sortState[structure.id];
+      if(s.key === key){ s.dir = s.dir==="asc" ? "desc" : "asc"; }
+      else { s.key = key; s.dir = key==="item" ? "asc" : "desc"; }
+      paintHeaderArrows(structure);
+      paintTableBody(structure);
+    });
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", ()=>exportCSV(structure));
+}
+
+function paintHeaderArrows(structure){
+  const s = sortState[structure.id];
+  modalContentEl.querySelectorAll("thead th").forEach(th=>{
+    const arrow = th.querySelector(".arrow");
+    if(th.dataset.key === s.key){
+      arrow.textContent = s.dir === "asc" ? "▲" : "▼";
+    } else {
+      arrow.textContent = "";
+    }
+  });
+}
+
+function paintTableBody(structure){
+  const s = sortState[structure.id];
+  const query = searchState[structure.id].trim().toLowerCase();
+
+  let rows = structure.materials.filter(r=>r.item.toLowerCase().includes(query));
+
+  if(s.key){
+    rows = [...rows].sort((a,b)=>{
+      let av=a[s.key], bv=b[s.key];
+      if(typeof av === "string"){ av = av.toLowerCase(); bv = bv.toLowerCase(); }
+      if(av<bv) return s.dir==="asc" ? -1 : 1;
+      if(av>bv) return s.dir==="asc" ? 1 : -1;
+      return 0;
+    });
+  }
+
+  const tbody = document.getElementById("tbody");
+  if(rows.length===0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">No item matches “${searchState[structure.id]}”.</td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map(r=>`
+      <tr>
+        <td class="cell-item">${r.item}</td>
+        <td class="cell-num">${fmt(r.total)}</td>
+        <td class="cell-num miss">${fmt(r.missing)}</td>
+        <td class="cell-num avail">${fmt(r.available)}</td>
+      </tr>
+    `).join("");
+  }
+
+  document.getElementById("visibleCount").textContent = `Showing ${rows.length} of ${structure.materials.length} block types`;
+}
+
+function exportCSV(structure){
+  const header = "Item,Total,Missing,Available\n";
+  const body = structure.materials.map(r=>`"${r.item}",${r.total},${r.missing},${r.available}`).join("\n");
+  const blob = new Blob([header+body], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${structure.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-manifest.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- Init ---------- */
+
+renderLedgerStats();
+renderCards();
+</script>
+</body>
+</html>
